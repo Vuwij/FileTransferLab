@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 int main(int argc, char** argv) {
-    printf("Client Started: \n");
+    printf("Server Started: \n");
     fflush(stdout);
     
     char* command;
