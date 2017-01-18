@@ -49,6 +49,15 @@ MKDIR=mkdir
 CP=cp
 CCADMIN=CCadmin
 
+# default
+default: .server .deliver
+
+.deliver:
+	gcc deliver.c -o deliver
+
+.server:
+	gcc server.c -o server
+
 
 # build
 build: .build-post
@@ -57,8 +66,6 @@ build: .build-post
 # Add your pre 'build' code here...
 
 .build-post: .build-impl
-# Add your post 'build' code here...
-
 
 # clean
 clean: .clean-post
