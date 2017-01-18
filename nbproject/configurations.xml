@@ -12,8 +12,12 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
-      <itemPath>deliver.c</itemPath>
-      <itemPath>server.c</itemPath>
+      <logicalFolder name="client" displayName="client" projectFiles="true">
+        <itemPath>client/deliver.c</itemPath>
+      </logicalFolder>
+      <logicalFolder name="server" displayName="server" projectFiles="true">
+        <itemPath>server/server.c</itemPath>
+      </logicalFolder>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -27,6 +31,10 @@
       <itemPath>Makefile</itemPath>
     </logicalFolder>
   </logicalFolder>
+  <sourceRootList>
+    <Elem>server</Elem>
+    <Elem>client</Elem>
+  </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
     <conf name="Server" type="1">
@@ -37,9 +45,9 @@
       </toolsSet>
       <compileType>
       </compileType>
-      <item path="deliver.c" ex="false" tool="0" flavor2="0">
+      <item path="client/deliver.c" ex="false" tool="0" flavor2="0">
       </item>
-      <item path="server.c" ex="false" tool="0" flavor2="0">
+      <item path="server/server.c" ex="false" tool="0" flavor2="0">
       </item>
     </conf>
     <conf name="Client" type="1">
@@ -50,9 +58,9 @@
       </toolsSet>
       <compileType>
       </compileType>
-      <item path="deliver.c" ex="false" tool="0" flavor2="0">
+      <item path="client/deliver.c" ex="false" tool="0" flavor2="0">
       </item>
-      <item path="server.c" ex="false" tool="0" flavor2="0">
+      <item path="server/server.c" ex="false" tool="0" flavor2="0">
       </item>
     </conf>
   </confs>

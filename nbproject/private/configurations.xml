@@ -13,6 +13,8 @@
         <gdb_interceptlist>
           <gdbinterceptoptions gdb_all="false" gdb_unhandled="true" gdb_unexpected="true"/>
         </gdb_interceptlist>
+        <gdb_signals>
+        </gdb_signals>
         <gdb_options>
           <DebugOptions>
           </DebugOptions>
@@ -29,8 +31,9 @@
           <runcommandpicklistitem>./server
 ./deliver</runcommandpicklistitem>
           <runcommandpicklistitem>./server</runcommandpicklistitem>
+          <runcommandpicklistitem>build/Server/server</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>./server</runcommand>
+        <runcommand>build/Server/server</runcommand>
         <rundir>/homes/w/wangj261/Documents/ECE361/File Transfer Lab/.</rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>
@@ -63,8 +66,9 @@
         <runcommandpicklist>
           <runcommandpicklistitem>"${OUTPUT_PATH}"</runcommandpicklistitem>
           <runcommandpicklistitem>./deliver</runcommandpicklistitem>
+          <runcommandpicklistitem>build/Server/deliver</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>./deliver</runcommand>
+        <runcommand>build/Server/deliver</runcommand>
         <rundir></rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>

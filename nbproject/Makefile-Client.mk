@@ -35,8 +35,8 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
-	${OBJECTDIR}/deliver.o \
-	${OBJECTDIR}/server.o
+	${OBJECTDIR}/client/deliver.o \
+	${OBJECTDIR}/server/server.o
 
 
 # C Compiler Flags
@@ -63,15 +63,15 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/file_transfer_lab: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
 	${LINK.c} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/file_transfer_lab ${OBJECTFILES} ${LDLIBSOPTIONS}
 
-${OBJECTDIR}/deliver.o: deliver.c 
-	${MKDIR} -p ${OBJECTDIR}
+${OBJECTDIR}/client/deliver.o: client/deliver.c 
+	${MKDIR} -p ${OBJECTDIR}/client
 	${RM} "$@.d"
-	$(COMPILE.c) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/deliver.o deliver.c
+	$(COMPILE.c) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/client/deliver.o client/deliver.c
 
-${OBJECTDIR}/server.o: server.c 
-	${MKDIR} -p ${OBJECTDIR}
+${OBJECTDIR}/server/server.o: server/server.c 
+	${MKDIR} -p ${OBJECTDIR}/server
 	${RM} "$@.d"
-	$(COMPILE.c) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/server.o server.c
+	$(COMPILE.c) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/server/server.o server/server.c
 
 # Subprojects
 .build-subprojects:

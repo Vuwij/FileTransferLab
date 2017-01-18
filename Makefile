@@ -49,14 +49,20 @@ MKDIR=mkdir
 CP=cp
 CCADMIN=CCadmin
 
-# default
-default: .server .deliver
+SERVER=build/Server
+CLIENT=build/Client
 
-.deliver:
-	gcc deliver.c -o deliver
+# default
+default: .create_dir .server .client
+
+.create_dir:
+	mkdir -p $(CLIENT) && mkdir -p $(SERVER)
+
+.client:
+	gcc -o $(CLIENT)/deliver client/*.c
 
 .server:
-	gcc server.c -o server
+	gcc -o $(SERVER)/server server/*.c
 
 
 # build
