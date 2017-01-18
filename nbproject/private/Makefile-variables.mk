@@ -3,6 +3,5 @@
 #
 # NOCDDL
 #
-# Debug configuration
-# Release configuration
 # Server configuration
+# Client configuration

@@ -12,15 +12,11 @@
             <sourceRootList/>
             <confList>
                 <confElem>
-                    <name>Debug</name>
-                    <type>1</type>
-                </confElem>
-                <confElem>
-                    <name>Release</name>
-                    <type>1</type>
-                </confElem>
-                <confElem>
                     <name>Server</name>
+                    <type>1</type>
+                </confElem>
+                <confElem>
+                    <name>Client</name>
                     <type>1</type>
                 </confElem>
             </confList>
