@@ -1,6 +1,3 @@
-/*
- ** server.c -- a stream socket server demo
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -13,8 +10,9 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
-#define PORT "3490" // the port users will be connecting to
-#define BACKLOG 10 // how many pending connections queue will hold
+#include "../constants.h"
+
+#define BACKLOG 10  // how many pending connections queue will hold
 
 void usage(char *program) {
     fprintf(stderr, "Usage: %s <UDP listen port>\n", program);
@@ -27,8 +25,8 @@ void sigchld_handler(int s) {
     while (waitpid(-1, NULL, WNOHANG) > 0);
     errno = saved_errno;
 }
-// get sockaddr, IPv4 or IPv6:
 
+// get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa) {
     if (sa->sa_family == AF_INET) {
         return &(((struct sockaddr_in*) sa)->sin_addr);
@@ -37,26 +35,22 @@ void *get_in_addr(struct sockaddr *sa) {
 }
 
 int main(int argc, char *argv[]) {
-
     int port;
 
-
-    //Parsing commend line arguments
-    if (argc != 2)
-        usage(argv[0]);
+    //Parsing command line arguments
+    if (argc != 2) usage(argv[0]);
 
     port = atoi(argv[1]);
     if (!(0 <= port && port <= 65535)) {
         fprintf(stderr, "port = %d should be within 0-65535\n", port);
         usage(argv[0]);
     }
-
+    
     /**************************************************************************
      *                            Section 1                                   *
      **************************************************************************/
 
     // 1. Open a UDP socket and listen at the specified port number
-
     int sockfd, new_fd; // listen on sock_fd, new connection on new_fd
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_storage their_addr; // connector's address information
