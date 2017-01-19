@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=File Transfer Lab
+PROJECTNAME=FileTransferLab
 
 # Active Configuration
 DEFAULTCONF=Server

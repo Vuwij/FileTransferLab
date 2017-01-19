@@ -57,11 +57,11 @@ LDLIBSOPTIONS=
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
-	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/file_transfer_lab
+	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/filetransferlab
 
-${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/file_transfer_lab: ${OBJECTFILES}
+${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/filetransferlab: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
-	${LINK.c} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/file_transfer_lab ${OBJECTFILES} ${LDLIBSOPTIONS}
+	${LINK.c} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/filetransferlab ${OBJECTFILES} ${LDLIBSOPTIONS}
 
 ${OBJECTDIR}/client/deliver.o: client/deliver.c 
 	${MKDIR} -p ${OBJECTDIR}/client
@@ -79,7 +79,7 @@ ${OBJECTDIR}/server/server.o: server/server.c
 # Clean Targets
 .clean-conf: ${CLEAN_SUBPROJECTS}
 	${RM} -r ${CND_BUILDDIR}/${CND_CONF}
-	${RM} ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/file_transfer_lab
+	${RM} ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/filetransferlab
 
 # Subprojects
 .clean-subprojects:

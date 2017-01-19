@@ -32,7 +32,7 @@
           <runcommandpicklistitem>build/Server/server</runcommandpicklistitem>
         </runcommandpicklist>
         <runcommand>build/Server/server</runcommand>
-        <rundir>/homes/w/wangj261/Documents/ECE361/File Transfer Lab/.</rundir>
+        <rundir>/nfs/ug/homes-2/c/choseun3/ece361/FileTransferLab/.</rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>
         <remove-instrumentation>0</remove-instrumentation>
@@ -68,7 +68,7 @@
           <runcommandpicklistitem>build/Client/deliver</runcommandpicklistitem>
         </runcommandpicklist>
         <runcommand>build/Client/deliver</runcommand>
-        <rundir></rundir>
+        <rundir>/nfs/ug/homes-2/c/choseun3/ece361/FileTransferLab/.</rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>
         <remove-instrumentation>0</remove-instrumentation>
