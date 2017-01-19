@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
     inet_ntop(p->ai_family, get_in_addr((struct sockaddr *) p->ai_addr),   // inet_ntop -> IP Network Network to Presentation
             s, sizeof s);
     printf("client: connecting to %s\n", s);
-
+    
     // Sending a message "ftp" to the server
     if (send(sockfd, "ftp", 13, 0) == -1)
         perror("send");

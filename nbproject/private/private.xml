@@ -2,6 +2,15 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <data xmlns="http://www.netbeans.org/ns/make-project-private/1">
         <activeConfTypeElem>1</activeConfTypeElem>
-        <activeConfIndexElem>0</activeConfIndexElem>
+        <activeConfIndexElem>1</activeConfIndexElem>
     </data>
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/homes/w/wangj261/Documents/ECE361/File%20Transfer%20Lab/constants.h</file>
+            <file>file:/homes/w/wangj261/Documents/ECE361/File%20Transfer%20Lab/Makefile</file>
+            <file>file:/homes/w/wangj261/Documents/ECE361/File%20Transfer%20Lab/client/deliver.c</file>
+            <file>file:/homes/w/wangj261/Documents/ECE361/File%20Transfer%20Lab/server/server.c</file>
+        </group>
+    </open-files>
 </project-private>

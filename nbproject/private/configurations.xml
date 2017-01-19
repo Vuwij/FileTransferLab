@@ -13,8 +13,12 @@
         <gdb_interceptlist>
           <gdbinterceptoptions gdb_all="false" gdb_unhandled="true" gdb_unexpected="true"/>
         </gdb_interceptlist>
+        <gdb_signals>
+        </gdb_signals>
         <gdb_options>
           <DebugOptions>
+            <option name="gdb_init_file" value=""/>
+            <option name="symbol_file" value=""/>
           </DebugOptions>
         </gdb_options>
         <gdb_buildfirst gdb_buildfirst_overriden="false" gdb_buildfirst_old="false"/>
@@ -30,8 +34,10 @@
 ./deliver</runcommandpicklistitem>
           <runcommandpicklistitem>./server</runcommandpicklistitem>
           <runcommandpicklistitem>build/Server/server</runcommandpicklistitem>
+          <runcommandpicklistitem>build/Server/server 8888</runcommandpicklistitem>
+          <runcommandpicklistitem>build/Server/server 21</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>build/Server/server</runcommand>
+        <runcommand>build/Server/server 21</runcommand>
         <rundir></rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>
@@ -51,6 +57,8 @@
         <gdb_interceptlist>
           <gdbinterceptoptions gdb_all="false" gdb_unhandled="true" gdb_unexpected="true"/>
         </gdb_interceptlist>
+        <gdb_signals>
+        </gdb_signals>
         <gdb_options>
           <DebugOptions>
           </DebugOptions>
@@ -66,8 +74,9 @@
           <runcommandpicklistitem>./deliver</runcommandpicklistitem>
           <runcommandpicklistitem>build/Server/deliver</runcommandpicklistitem>
           <runcommandpicklistitem>build/Client/deliver</runcommandpicklistitem>
+          <runcommandpicklistitem>build/Client/deliver 127.0.0.2 80</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>build/Client/deliver</runcommand>
+        <runcommand>build/Client/deliver 127.0.0.2 80</runcommand>
         <rundir></rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>
