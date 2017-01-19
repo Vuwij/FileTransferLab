@@ -1,6 +1,3 @@
-/*
- ** client.c -- a stream socket client demo
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,10 +9,10 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#define PORT "3490" // the port client will be connecting to
+#include "../constants.h"
+
 #define MAXDATASIZE 100 // max number of bytes we can get at once
 // get sockaddr, IPv4 or IPv6:
-
 #define MAXBUFSIZE 100
 
 void usage(char *program) {
@@ -31,13 +28,11 @@ void *get_in_addr(struct sockaddr *sa) {
 }
 
 int main(int argc, char *argv[]) {
-
     int port;
     char serverAddress[MAXBUFSIZE];
 
-    //Parsing commend line arguments
-    if (argc != 3)
-        usage(argv[0]);
+    //Parsing command line arguments
+    if (argc != 3) usage(argv[0]);
 
     strncpy(serverAddress, argv[1], MAXBUFSIZE);
 
@@ -56,7 +51,6 @@ int main(int argc, char *argv[]) {
     char protocolType[MAXBUFSIZE];
     char fileName[MAXBUFSIZE];
 
-
     while (1) {
         scanf("%s %s", protocolType, fileName);
         if (strcmp(protocolType, "ftp") != 0)
@@ -65,36 +59,31 @@ int main(int argc, char *argv[]) {
             break;
     }
 
-
-
     // 2. Check the existence of the file:
     //      a) if exists, send a message "ftp" to the server
     //      b) else, exit
 
-
-    //Open a file stream
+    // Open a file stream
     FILE *fp = fopen(fileName, "r");
 
-    //Check if it exists
+    // Check if it exists
     if (!fp) {
         fprintf(stderr, "Error: the file does not exist in the folder\n");
         exit(1);
     }
-
-
-
-    //============================ Copying Code From Here ======================
-    int sockfd;
-    struct addrinfo hints, *servinfo, *p;
-    int rv;
+    
+    // Make a network connection and find the correct socket
+    int sockfd;                                                         // Socket File Descriptor
+    struct addrinfo hints, *servinfo, *p;                               // Address information of the Connection
+    int rv;                                                             // Return value of the socket
     char s[INET6_ADDRSTRLEN];
 
     memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family = AF_UNSPEC;                                        // Unspecified Address Family
+    hints.ai_socktype = SOCK_STREAM;                                    // Socket type stream (TCP)
     if ((rv = getaddrinfo(argv[1], PORT, &hints, &servinfo)) != 0) {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-        return 1;
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));         // gai_strerror -> Get Address Info String Error
+        return EXIT_FAILURE;
     }
     // loop through all the results and connect to the first we can
     for (p = servinfo; p != NULL; p = p->ai_next) {
@@ -114,23 +103,19 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "client: failed to connect\n");
         return 2;
     }
-    inet_ntop(p->ai_family, get_in_addr((struct sockaddr *) p->ai_addr),
+    inet_ntop(p->ai_family, get_in_addr((struct sockaddr *) p->ai_addr),   // inet_ntop -> IP Network Network to Presentation
             s, sizeof s);
     printf("client: connecting to %s\n", s);
-
-    //============================ Copying Code Til Here ======================
-
-    //Sending a message "ftp" to the server
+    
+    // Sending a message "ftp" to the server
     if (send(sockfd, "ftp", 13, 0) == -1)
         perror("send");
-
 
     // 3. Receive a message from the server:
     //      a) If the message is "yes", print out "A file transfer can start"
     //      b) else, exit
     char msg[MAXBUFSIZE];
     int numbytes;
-
 
     if ((numbytes = recv(sockfd, msg, MAXDATASIZE - 1, 0)) == -1) {
         perror("recv");
