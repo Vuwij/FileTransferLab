@@ -31,11 +31,13 @@ int main(int argc, char *argv[]) {
     int port;
     char serverAddress[MAXBUFSIZE];
 
-    //Parsing command line arguments
+    // Check number of arguments       
     if (argc != 3) usage(argv[0]);
 
+    // Copy IP into serverAddress
     strncpy(serverAddress, argv[1], MAXBUFSIZE);
 
+    // Copy the port number to be used
     port = atoi(argv[2]);
     if (!(0 <= port && port <= 65535)) {
         fprintf(stderr, "port = %d should be within 0-65535\n", port);
@@ -52,8 +54,9 @@ int main(int argc, char *argv[]) {
     char fileName[MAXBUFSIZE];
 
     while (1) {
+        printf("client: ");
         scanf("%s %s", protocolType, fileName);
-        if (strcmp(protocolType, "ftp") != 0)
+        if (strcmp(protocolType, "ftp") != 0 || protocolType == NULL || fileName == NULL)
             fprintf(stderr, "Usage: ftp <file name>\n");
         else
             break;
@@ -71,51 +74,54 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Error: the file does not exist in the folder\n");
         exit(1);
     }
-    
+
     // Make a network connection and find the correct socket
-    int sockfd;                                                         // Socket File Descriptor
-    struct addrinfo hints, *servinfo, *p;                               // Address information of the Connection
-    int rv;                                                             // Return value of the socket
-    char s[INET6_ADDRSTRLEN];
+    int sockfd;
+    struct addrinfo hints, *servinfo, *p;
+    int rv;
+    int numbytes;
 
     memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;                                        // Unspecified Address Family
-    hints.ai_socktype = SOCK_STREAM;                                    // Socket type stream (TCP)
-    if ((rv = getaddrinfo(argv[1], PORT, &hints, &servinfo)) != 0) {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));         // gai_strerror -> Get Address Info String Error
-        return EXIT_FAILURE;
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+
+    if ((rv = getaddrinfo(argv[1], argv[2], &hints, &servinfo)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+        return 1;
     }
-    // loop through all the results and connect to the first we can
+
+    // loop through all the results and make a socket
     for (p = servinfo; p != NULL; p = p->ai_next) {
         if ((sockfd = socket(p->ai_family, p->ai_socktype,
                 p->ai_protocol)) == -1) {
             perror("client: socket");
             continue;
         }
-        if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-            close(sockfd);
-            perror("client: connect");
-            continue;
-        }
+
         break;
     }
+
     if (p == NULL) {
-        fprintf(stderr, "client: failed to connect\n");
+        fprintf(stderr, "client: failed to create socket\n");
         return 2;
     }
-    inet_ntop(p->ai_family, get_in_addr((struct sockaddr *) p->ai_addr),   // inet_ntop -> IP Network Network to Presentation
-            s, sizeof s);
-    printf("client: connecting to %s\n", s);
-    
-    // Sending a message "ftp" to the server
-    if (send(sockfd, "ftp", 13, 0) == -1)
-        perror("send");
+
+
+    // Sending a message protocolType "ftp" to the server
+    if ((numbytes = sendto(sockfd, protocolType, strlen(protocolType), 0,
+            p->ai_addr, p->ai_addrlen)) == -1) {
+        perror("client: sendto");
+        exit(1);
+    }
+
+    freeaddrinfo(servinfo);
+    printf("talker: sent %d bytes to %s\n", numbytes, argv[1]);
+
 
     // 3. Receive a message from the server:
     //      a) If the message is "yes", print out "A file transfer can start"
     //      b) else, exit
     char msg[MAXBUFSIZE];
-    int numbytes;
 
     if ((numbytes = recv(sockfd, msg, MAXDATASIZE - 1, 0)) == -1) {
         perror("recv");
@@ -124,28 +130,13 @@ int main(int argc, char *argv[]) {
     msg[numbytes] = '\0';
 
     if (strcmp(msg, "yes") != 0) {
-        fprintf(stderr, "Error: Section1-3 expecting msg: %s, but received %s", "yes", msg);
+        fprintf(stderr, "Error: Section1-3 expecting msg: %s, but received \"%s\"\n", "yes", msg);
         exit(1);
     } else
         printf("A file transfer can start\n");
 
     //Stop here
     while (1);
-
-
-
-
-    /**************************************************************************
-     *                            Section 2                                   *
-     **************************************************************************/
-
-
-
-
-    /**************************************************************************
-     *                            Section 3                                   *
-     **************************************************************************/
-
 
     close(sockfd);
     return 0;
