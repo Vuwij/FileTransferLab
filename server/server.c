@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
     int port;
 
     //Parsing command line arguments
-    if (argc != 2) usage(argv[0]);
+    if (argc != 2) usage(argv[0]);  
 
     port = atoi(argv[1]);
     if (!(0 <= port && port <= 65535)) {
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
 
     buf[numbytes] = '\0';
 
-    char *reply = (strcmp(buf, "ftp") != 0) ? "yes" : "no";
+    char *reply = (strcmp(buf, "ftp") == 0) ? "yes" : "no";
 
 
     printf("listener: got packet from %s\n",
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
         perror("sendto");
         exit(1);
     }
-
+    
     //Stop here
     while (1);
 
