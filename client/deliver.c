@@ -9,9 +9,11 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include "../constants.h"
 
-#define MAXDATASIZE 100 // max number of bytes we can get at once
+
+#define MAXDATASIZE 1000 // max number of bytes we can get at once
 // get sockaddr, IPv4 or IPv6:
 #define MAXBUFSIZE 100
 
@@ -66,8 +68,8 @@ int main(int argc, char *argv[]) {
     //      a) if exists, send a message "ftp" to the server
     //      b) else, exit
 
-    // Open a file stream
-    FILE *fp = fopen(fileName, "r");
+    // Open a file stream, in binary mode
+    FILE *fp = fopen(fileName, "rb");
 
     // Check if it exists
     if (!fp) {
@@ -135,8 +137,87 @@ int main(int argc, char *argv[]) {
     } else
         printf("A file transfer can start\n");
 
-    //Stop here
-    while (1);
+
+    /**************************************************************************
+     *                            Section 2                                   *
+     **************************************************************************/
+
+    /* Based on the above client and server, you need to measure the round trip
+     * time from the client to the server
+     */
+
+
+
+
+
+
+    /**************************************************************************
+     *                            Section 3                                   *
+     **************************************************************************/
+
+    // Implement a client and a server to transfer a file
+    // Unlike simply receiving a msg and sending it back,
+    // You are required to have a specific packet format
+    // And implement ACK for the simple file transfer using UDP socket
+
+
+    // Find the size of the file
+    struct stat bufStat;
+    fstat(fileno(fp), &bufStat);
+    int totalSize = bufStat.st_size;
+    int totalFrag = totalSize / 1000;
+    int lastFragSize = totalSize % 1000;
+
+    // Initialize packet    
+    struct packet pac;
+    pac.filename = fileName;
+    pac.frag_no = 1;
+    pac.size = lastFragSize;
+    pac.total_frag = totalFrag;
+
+    // Copy the data field
+    int num = fread(pac.filedata, 1, 1000, fp);
+
+    // Initialize header of the packet
+    char pacHeader[2000];
+    sprintf(pacHeader, "%d:%d:%d:%s:", pac.total_frag, pac.frag_no, pac.size, pac.filename);
+
+    //Testing
+    printf("%s\n", pacHeader);
+
+    // Sending a message protocolType "ftp" to the server
+    if ((numbytes = sendto(sockfd, pacHeader, sizeof (pacHeader), 0,
+            p->ai_addr, p->ai_addrlen)) == -1) {
+        perror("client: sendto");
+        exit(1);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /* You may use a simple stop-and-wait style ACK
+     * The server may use ACK and NACK packets to control data flow from the sender
+     * The client should open a UDP socket to listen for acknowledgements from the server
+     */
+
+    // If a file is larger than 1000 bytes, the file needs to be fragmented into smaller packets
+    // with max size 1000 before transmission
+
+
+
 
     close(sockfd);
     return 0;

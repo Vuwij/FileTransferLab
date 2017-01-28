@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
     int port;
 
     //Parsing command line arguments
-    if (argc != 2) usage(argv[0]);  
+    if (argc != 2) usage(argv[0]);
 
     port = atoi(argv[1]);
     if (!(0 <= port && port <= 65535)) {
@@ -118,10 +118,63 @@ int main(int argc, char *argv[]) {
         perror("sendto");
         exit(1);
     }
-    
-    //Stop here
-    while (1);
 
+    /**************************************************************************
+     *                            Section 2                                   *
+     **************************************************************************/
+
+
+
+
+
+
+    /**************************************************************************
+     *                            Section 3                                   *
+     **************************************************************************/
+    // Upon receiving the first packet in a sequence (frag_no = 1)
+    // The program should read the file name from the packet and create a corresponding
+    // file stream on the local file system
+    // Data read from packets should then be written to this file stream
+    // If the EOF packet is received, the file stream should be closed
+
+    char pacHeader[2000];
+    struct packet pac;
+
+    if ((numbytes = recvfrom(sockfd, pacHeader, sizeof (pacHeader), 0,
+            (struct sockaddr *) &their_addr, &addr_len)) == -1) {
+        perror("recvfrom");
+        exit(1);
+    }
+
+    // Using tokenizer
+    const char delim[2] = ":";
+    char *token;
+
+    // First argument
+    token = strtok(pacHeader, delim);
+    pac.total_frag = (unsigned int) strtoul(token, NULL, 10);
+
+    // Second argument
+    token = strtok(NULL, delim);
+    pac.frag_no = (unsigned int) strtoul(token, NULL, 10);
+
+    // Third argument
+    token = strtok(NULL, delim);
+    pac.size = (unsigned int) strtoul(token, NULL, 10);
+
+    // Fourth argument
+    pac.filename = strtok(NULL, delim);
+
+    // Fifth argument
+
+    // Testing
+    printf("%d\n %d\n %d\n %s\n", pac.total_frag, pac.frag_no, pac.size, pac.filename);
+
+
+    // Make or open the file
+    FILE *fp = fopen(pac.filename, "a");
+
+    close(fileno(fp));
     close(sockfd);
     return 0;
 }
