@@ -175,7 +175,8 @@ int main(int argc, char *argv[]) {
     memcpy(filename, &receivedPacket[colonLocation[2] + 1], colonLocation[3] - colonLocation[2]);
     filename[colonLocation[3] - colonLocation[2] - 1] = '\x00';
 
-    printf("%d %d %d %sENDEND\n", total_frag, frag_no, size, filename);
+    //Writing to a file
+    FILE *fp = fopen(filename, "wb");
 
     struct packet *pac = malloc(sizeof (struct packet) * total_frag);
 
@@ -227,8 +228,6 @@ int main(int argc, char *argv[]) {
 
     }
 
-    //Writing to a file
-    FILE *fp = fopen(filename, "wb");
     for (i = 0; i < total_frag; i++) {
         int offset = 0;
         fwrite(pac[i].filedata, sizeof (char), pac[i].size, fp);
