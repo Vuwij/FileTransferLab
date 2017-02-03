@@ -11,6 +11,8 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include "../constants.h"
+#include <assert.h>
+
 
 #define BACKLOG 10  // how many pending connections queue will hold
 #define MAXBUFLEN 100
@@ -122,11 +124,7 @@ int main(int argc, char *argv[]) {
     /**************************************************************************
      *                            Section 2                                   *
      **************************************************************************/
-
-
-
-
-
+    //N/A
 
     /**************************************************************************
      *                            Section 3                                   *
@@ -137,44 +135,132 @@ int main(int argc, char *argv[]) {
     // Data read from packets should then be written to this file stream
     // If the EOF packet is received, the file stream should be closed
 
-    char pacHeader[2000];
-    struct packet pac;
+    //Process first packet to save information
+    char savedPacket[2000];
+    char receivedPacket[2000];
 
-    if ((numbytes = recvfrom(sockfd, pacHeader, sizeof (pacHeader), 0,
+    //Initialize the buffers
+    bzero(savedPacket, 2000);
+    bzero(receivedPacket, 2000);
+
+    //Variables to be used
+    int i;
+    int total_frag, frag_no, size;
+    char filename[1000];
+
+    //Receiving initialPacket
+    if ((numbytes = recvfrom(sockfd, receivedPacket, sizeof (receivedPacket), 0,
             (struct sockaddr *) &their_addr, &addr_len)) == -1) {
         perror("recvfrom");
         exit(1);
     }
 
-    // Using tokenizer
-    const char delim[2] = ":";
-    char *token;
-
-    // First argument
-    token = strtok(pacHeader, delim);
-    pac.total_frag = (unsigned int) strtoul(token, NULL, 10);
-
-    // Second argument
-    token = strtok(NULL, delim);
-    pac.frag_no = (unsigned int) strtoul(token, NULL, 10);
-
-    // Third argument
-    token = strtok(NULL, delim);
-    pac.size = (unsigned int) strtoul(token, NULL, 10);
-
-    // Fourth argument
-    pac.filename = strtok(NULL, delim);
-
-    // Fifth argument
-
-    // Testing
-    printf("%d\n %d\n %d\n %s\n", pac.total_frag, pac.frag_no, pac.size, pac.filename);
+    //Save just incase token doesn't take care of null character
+    memcpy(savedPacket, receivedPacket, 2000);
 
 
-    // Make or open the file
-    FILE *fp = fopen(pac.filename, "a");
+    int j = 0;
+    int colonLocation[4];
+    for (i = 0; i < 2000; i++) {
+        if (receivedPacket[i] == ':')
+            colonLocation[j++] = i;
+        if (j == 4)
+            break;
+    }
 
-    close(fileno(fp));
+    total_frag = atoi(receivedPacket);
+    frag_no = atoi(&receivedPacket[colonLocation[0] + 1]);
+    size = atoi(&receivedPacket[colonLocation[1] + 1]);
+
+    memcpy(filename, &receivedPacket[colonLocation[2] + 1], colonLocation[3] - colonLocation[2]);
+    filename[colonLocation[3] - colonLocation[2] - 1] = '\x00';
+
+    printf("%d %d %d %sENDEND\n", total_frag, frag_no, size, filename);
+
+    struct packet *pac = malloc(sizeof (struct packet) * total_frag);
+
+    //Save the initial packet in the array
+    memcpy(pac[frag_no].filedata, &receivedPacket[colonLocation[3] + 1], size);
+    pac[frag_no].filename = filename;
+    pac[frag_no].frag_no = frag_no;
+    pac[frag_no].size = size;
+    pac[frag_no].total_frag = total_frag;
+
+    int pacCount = 1; //With initial packet saved
+    while (pacCount++ < total_frag) {
+        bzero(receivedPacket, 2000);
+
+        //Variables to be used
+        int total_frag, frag_no, size;
+
+        //Receiving initialPacket
+        if ((numbytes = recvfrom(sockfd, receivedPacket, sizeof (receivedPacket), 0,
+                (struct sockaddr *) &their_addr, &addr_len)) == -1) {
+            perror("recvfrom");
+            exit(1);
+        }
+
+        //Save just incase token doesn't take care of null character
+        memcpy(savedPacket, receivedPacket, 2000);
+
+
+        int j = 0;
+        int colonLocation[4];
+        for (i = 0; i < 2000; i++) {
+            if (receivedPacket[i] == ':')
+                colonLocation[j++] = i;
+            if (j == 4)
+                break;
+        }
+
+
+        total_frag = atoi(receivedPacket);
+        frag_no = atoi(&receivedPacket[colonLocation[0] + 1]);
+        size = atoi(&receivedPacket[colonLocation[1] + 1]);
+
+        //Save the initial packet in the array
+        memcpy(pac[frag_no].filedata, &receivedPacket[colonLocation[3] + 1], size);
+        pac[frag_no].filename = filename;
+        pac[frag_no].frag_no = frag_no;
+        pac[frag_no].size = size;
+        pac[frag_no].total_frag = total_frag;
+
+    }
+
+    //Writing to a file
+    FILE *fp = fopen(filename, "wb");
+    for (i = 0; i < total_frag; i++) {
+        int offset = 0;
+        fwrite(pac[i].filedata, sizeof (char), pac[i].size, fp);
+    }
+
+
+
+    //Testing, output goes to testResult
+    FILE *test = fopen("testResult.txt", "wb");
+    for (i = 0; i < total_frag; i++) {
+        char testingBuf[2000];
+
+        //Preparing header
+        sprintf(testingBuf, "%d:%d:%d:", pac[i].total_frag, pac[i].frag_no, pac[i].size);
+
+        int digitStringSize = strlen(testingBuf);
+        int fileNameSize = strlen(pac[i].filename);
+
+        //Copy the filename
+        memcpy(&testingBuf[digitStringSize], pac[i].filename, fileNameSize);
+        memcpy(&testingBuf[digitStringSize + fileNameSize], ":", sizeof (char));
+        //Copy the file data
+        memcpy(&testingBuf[digitStringSize + fileNameSize + 1], pac[i].filedata, pac[i].size);
+
+        //Write the data in a file 
+        fwrite(testingBuf, sizeof (char), digitStringSize + fileNameSize + pac[i].size + 1, test);
+        fwrite("\n\n\n", sizeof (char), 3, test);
+    }
+
+
+    fclose(test);
+    fclose(fp);
     close(sockfd);
     return 0;
 }

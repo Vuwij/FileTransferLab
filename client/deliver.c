@@ -11,6 +11,8 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include "../constants.h"
+#include <time.h>
+#include <assert.h>
 
 
 #define MAXDATASIZE 1000 // max number of bytes we can get at once
@@ -32,6 +34,9 @@ void *get_in_addr(struct sockaddr *sa) {
 int main(int argc, char *argv[]) {
     int port;
     char serverAddress[MAXBUFSIZE];
+
+    //Section 2
+    clock_t startTime, endTime, diff;
 
     // Check number of arguments       
     if (argc != 3) usage(argv[0]);
@@ -63,6 +68,10 @@ int main(int argc, char *argv[]) {
         else
             break;
     }
+
+    //    strcpy(protocolType, "ftp");
+    //    strcpy(fileName, "1.txt");
+
 
     // 2. Check the existence of the file:
     //      a) if exists, send a message "ftp" to the server
@@ -109,6 +118,9 @@ int main(int argc, char *argv[]) {
     }
 
 
+
+    startTime = clock();
+
     // Sending a message protocolType "ftp" to the server
     if ((numbytes = sendto(sockfd, protocolType, strlen(protocolType), 0,
             p->ai_addr, p->ai_addrlen)) == -1) {
@@ -116,21 +128,22 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    freeaddrinfo(servinfo);
-    printf("talker: sent %d bytes to %s\n", numbytes, argv[1]);
 
+    //freeaddrinfo(servinfo);
 
     // 3. Receive a message from the server:
     //      a) If the message is "yes", print out "A file transfer can start"
     //      b) else, exit
     char msg[MAXBUFSIZE];
 
-    if ((numbytes = recv(sockfd, msg, MAXDATASIZE - 1, 0)) == -1) {
+    if ((numbytes = recvfrom(sockfd, msg, MAXDATASIZE - 1, 0,
+            p->ai_addr, &p->ai_addrlen)) == -1) {
         perror("recv");
         exit(1);
     }
-    msg[numbytes] = '\0';
+    endTime = clock();
 
+    msg[numbytes] = '\0';
     if (strcmp(msg, "yes") != 0) {
         fprintf(stderr, "Error: Section1-3 expecting msg: %s, but received \"%s\"\n", "yes", msg);
         exit(1);
@@ -146,9 +159,9 @@ int main(int argc, char *argv[]) {
      * time from the client to the server
      */
 
-
-
-
+    diff = endTime - startTime;
+    int usec = diff * 1000 * 1000 / CLOCKS_PER_SEC;
+    printf("Round trip time from the client to the server %d microseconds\n", usec);
 
 
     /**************************************************************************
@@ -165,48 +178,81 @@ int main(int argc, char *argv[]) {
     struct stat bufStat;
     fstat(fileno(fp), &bufStat);
     int totalSize = bufStat.st_size;
-    int totalFrag = totalSize / 1000;
+    int totalFrag = totalSize / 1000 + 1;
     int lastFragSize = totalSize % 1000;
 
     // Initialize packet    
-    struct packet pac;
-    pac.filename = fileName;
-    pac.frag_no = 1;
-    pac.size = lastFragSize;
-    pac.total_frag = totalFrag;
-
-    // Copy the data field
-    int num = fread(pac.filedata, 1, 1000, fp);
-
-    // Initialize header of the packet
-    char pacHeader[2000];
-    sprintf(pacHeader, "%d:%d:%d:%s:", pac.total_frag, pac.frag_no, pac.size, pac.filename);
-
-    //Testing
-    printf("%s\n", pacHeader);
-
-    // Sending a message protocolType "ftp" to the server
-    if ((numbytes = sendto(sockfd, pacHeader, sizeof (pacHeader), 0,
-            p->ai_addr, p->ai_addrlen)) == -1) {
-        perror("client: sendto");
-        exit(1);
+    struct packet *pac = malloc(sizeof (struct packet) * totalFrag);
+    int i, bytesRead;
+    for (i = 0; i < totalFrag; i++) {
+        if (i == totalFrag - 1) {
+            bytesRead = (int) fread(pac[i].filedata, sizeof (char), lastFragSize, fp);
+            assert(bytesRead == lastFragSize);
+            pac[i].filename = fileName;
+            pac[i].frag_no = i;
+            pac[i].size = lastFragSize;
+            pac[i].total_frag = totalFrag;
+        } else {
+            bytesRead = (int) fread(pac[i].filedata, sizeof (char), 1000, fp);
+            assert(bytesRead == 1000);
+            pac[i].filename = fileName;
+            pac[i].frag_no = i;
+            pac[i].size = 1000;
+            pac[i].total_frag = totalFrag;
+        }
     }
 
+    //Testing, output goes to testResult
+    FILE *test = fopen("testResult.txt", "wb");
+    for (i = 0; i < totalFrag; i++) {
+        char testingBuf[2000];
 
+        //Preparing header
+        sprintf(testingBuf, "%d:%d:%d:", pac[i].total_frag, pac[i].frag_no, pac[i].size);
 
+        int digitStringSize = strlen(testingBuf);
+        int fileNameSize = strlen(pac[i].filename);
 
+        //Copy the filename
+        memcpy(&testingBuf[digitStringSize], pac[i].filename, fileNameSize);
+        memcpy(&testingBuf[digitStringSize + fileNameSize], ":", sizeof (char));
 
+        //Copy the file data
+        memcpy(&testingBuf[digitStringSize + fileNameSize + 1], pac[i].filedata, pac[i].size);
 
+        //Write the data in a file 
+        fwrite(testingBuf, sizeof (char), digitStringSize + fileNameSize + pac[i].size + 1, test);
+        fwrite("\n\n\n", sizeof (char), 3, test);
+    }
 
+    //Concatenate necessary info+data and send it to server
+    int headerSize;
+    char finalPacket[2000];
+    for (i = 0; i < totalFrag; i++) {
 
+        //Initialize the buffer just incase :)
+        bzero(finalPacket, 2000);
 
+        //Start from header
+        sprintf(finalPacket, "%d:%d:%d:", pac[i].total_frag, pac[i].frag_no, pac[i].size);
+        int digitStringSize = strlen(finalPacket);
+        int fileNameSize = strlen(pac[i].filename);
 
+        //Copy the filename
+        memcpy(&finalPacket[digitStringSize], pac[i].filename, fileNameSize);
+        memcpy(&finalPacket[digitStringSize + fileNameSize], ":", sizeof (char));
 
+        //Copy the file data
+        memcpy(&finalPacket[digitStringSize + fileNameSize + 1], pac[i].filedata, pac[i].size);
 
+        if ((numbytes = sendto(sockfd, finalPacket, 2000, 0,
+                p->ai_addr, p->ai_addrlen)) == -1) {
+            perror("client: sendto");
+            exit(1);
+        }
+    }
 
-
-
-
+    free(pac);
 
     /* You may use a simple stop-and-wait style ACK
      * The server may use ACK and NACK packets to control data flow from the sender
@@ -217,8 +263,8 @@ int main(int argc, char *argv[]) {
     // with max size 1000 before transmission
 
 
-
-
+    fclose(test);
+    fclose(fp);
     close(sockfd);
     return 0;
 }
