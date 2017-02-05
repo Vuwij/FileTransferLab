@@ -1,5 +1,8 @@
 PORT=5001
 
+# BUILD FILES
+make
+
 # CLOSE TESTING PROGRAMS
 pkill server
 
