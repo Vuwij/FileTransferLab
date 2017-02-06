@@ -34,11 +34,11 @@ void *get_in_addr(struct sockaddr *sa) {
 int main(int argc, char *argv[]) {
     int port;
     char serverAddress[MAXBUFSIZE];
+    clock_t startTime, endTime, diff; //Section 2
 
-    //Section 2
-    clock_t startTime, endTime, diff;
-
-    // Check number of arguments       
+    /**************************************************************************
+     *                     Parsing and Error Checking                         *
+     **************************************************************************/
     if (argc != 3) usage(argv[0]);
 
     // Copy IP into serverAddress
@@ -69,15 +69,7 @@ int main(int argc, char *argv[]) {
             break;
     }
 
-    //    strcpy(protocolType, "ftp");
-    //    strcpy(fileName, "1.txt");
-
-
-    // 2. Check the existence of the file:
-    //      a) if exists, send a message "ftp" to the server
-    //      b) else, exit
-
-    // Open a file stream, in binary mode
+    // 2. Check the existence of the file
     FILE *fp = fopen(fileName, "rb");
 
     // Check if it exists
@@ -108,7 +100,6 @@ int main(int argc, char *argv[]) {
             perror("client: socket");
             continue;
         }
-
         break;
     }
 
@@ -117,8 +108,7 @@ int main(int argc, char *argv[]) {
         return 2;
     }
 
-
-
+    //Note the time before sending a packet
     startTime = clock();
 
     // Sending a message protocolType "ftp" to the server
@@ -128,12 +118,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-
-    //freeaddrinfo(servinfo);
-
     // 3. Receive a message from the server:
-    //      a) If the message is "yes", print out "A file transfer can start"
-    //      b) else, exit
     char msg[MAXBUFSIZE];
 
     if ((numbytes = recvfrom(sockfd, msg, MAXDATASIZE - 1, 0,
@@ -141,6 +126,8 @@ int main(int argc, char *argv[]) {
         perror("recv");
         exit(1);
     }
+
+    //Note the time after receiving a packet
     endTime = clock();
 
     msg[numbytes] = '\0';
@@ -158,7 +145,6 @@ int main(int argc, char *argv[]) {
     /* Based on the above client and server, you need to measure the round trip
      * time from the client to the server
      */
-
     diff = endTime - startTime;
     int usec = diff * 1000 * 1000 / CLOCKS_PER_SEC;
     printf("Round trip time from the client to the server %d microseconds\n", usec);
@@ -202,7 +188,58 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    //Testing, output goes to testResult
+    /* You may use a simple stop-and-wait style ACK
+     * The server may use ACK and NACK packets to control data flow from the sender
+     * The client should open a UDP socket to listen for ACK from the server
+     */
+
+    //Concatenate necessary info+data and send it to server
+    int headerSize;
+    char finalPacket[2000];
+    for (i = 0; i < totalFrag; i++) {
+
+        //Initialize the buffer just incase :)
+        bzero(finalPacket, 2000);
+
+        //Start from header
+        sprintf(finalPacket, "%d:%d:%d:", pac[i].total_frag, pac[i].frag_no, pac[i].size);
+        int digitStringSize = strlen(finalPacket);
+        int fileNameSize = strlen(pac[i].filename);
+
+        //Copy the filename
+        memcpy(&finalPacket[digitStringSize], pac[i].filename, fileNameSize);
+        memcpy(&finalPacket[digitStringSize + fileNameSize], ":", sizeof (char));
+
+        //Copy the file data
+        memcpy(&finalPacket[digitStringSize + fileNameSize + 1], pac[i].filedata, pac[i].size);
+
+        //If it's not initial packet then wait for AWK
+        if (i != 0) {
+            if ((numbytes = recvfrom(sockfd, msg, MAXDATASIZE - 1, 0,
+                    p->ai_addr, &p->ai_addrlen)) == -1) {
+                perror("recv");
+                exit(1);
+            }
+            if (strcmp(msg, "ACK") == 0)
+                ;
+            else if (strcmp(msg, "NACK") == 0)
+                exit(99);
+        }
+
+
+        if ((numbytes = sendto(sockfd, finalPacket, 2000, 0,
+                p->ai_addr, p->ai_addrlen)) == -1) {
+            perror("client: sendto");
+            exit(1);
+        }
+    }
+
+
+
+    /**************************************************************************
+     *                            Test File                                   *
+     **************************************************************************/
+
     FILE *test = fopen("testResult.txt", "wb");
     for (i = 0; i < totalFrag; i++) {
         char testingBuf[2000];
@@ -225,44 +262,10 @@ int main(int argc, char *argv[]) {
         fwrite("\n\n\n", sizeof (char), 3, test);
     }
 
-    //Concatenate necessary info+data and send it to server
-    int headerSize;
-    char finalPacket[2000];
-    for (i = 0; i < totalFrag; i++) {
 
-        //Initialize the buffer just incase :)
-        bzero(finalPacket, 2000);
-
-        //Start from header
-        sprintf(finalPacket, "%d:%d:%d:", pac[i].total_frag, pac[i].frag_no, pac[i].size);
-        int digitStringSize = strlen(finalPacket);
-        int fileNameSize = strlen(pac[i].filename);
-
-        //Copy the filename
-        memcpy(&finalPacket[digitStringSize], pac[i].filename, fileNameSize);
-        memcpy(&finalPacket[digitStringSize + fileNameSize], ":", sizeof (char));
-
-        //Copy the file data
-        memcpy(&finalPacket[digitStringSize + fileNameSize + 1], pac[i].filedata, pac[i].size);
-
-        if ((numbytes = sendto(sockfd, finalPacket, 2000, 0,
-                p->ai_addr, p->ai_addrlen)) == -1) {
-            perror("client: sendto");
-            exit(1);
-        }
-    }
 
     free(pac);
-
-    /* You may use a simple stop-and-wait style ACK
-     * The server may use ACK and NACK packets to control data flow from the sender
-     * The client should open a UDP socket to listen for acknowledgements from the server
-     */
-
-    // If a file is larger than 1000 bytes, the file needs to be fragmented into smaller packets
-    // with max size 1000 before transmission
-
-
+    freeaddrinfo(servinfo);
     fclose(test);
     fclose(fp);
     close(sockfd);

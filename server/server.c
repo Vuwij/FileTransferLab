@@ -13,7 +13,6 @@
 #include "../constants.h"
 #include <assert.h>
 
-
 #define BACKLOG 10  // how many pending connections queue will hold
 #define MAXBUFLEN 100
 
@@ -33,7 +32,9 @@ void *get_in_addr(struct sockaddr *sa) {
 int main(int argc, char *argv[]) {
     int port;
 
-    //Parsing command line arguments
+    /**************************************************************************
+     *                     Parsing and Error Checking                         *
+     **************************************************************************/
     if (argc != 2) usage(argv[0]);
 
     port = atoi(argv[1]);
@@ -41,6 +42,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "port = %d should be within 0-65535\n", port);
         usage(argv[0]);
     }
+
 
     /**************************************************************************
      *                            Section 1                                   *
@@ -102,21 +104,15 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+    //Insert Null at the end of the buf string
     buf[numbytes] = '\0';
 
+    //Confirm if connection is FTP
     char *reply = (strcmp(buf, "ftp") == 0) ? "yes" : "no";
 
-
-    printf("listener: got packet from %s\n",
-            inet_ntop(their_addr.ss_family,
-            get_in_addr((struct sockaddr *) &their_addr),
-            s, sizeof s));
-    printf("listener: packet is %d bytes long\n", numbytes);
-    buf[numbytes] = '\0';
-    printf("listener: packet contains \"%s\"\n", buf);
-    printf("listener: sending \"%s\"\n", reply);
-
-    if ((numbytes = sendto(sockfd, reply, strlen(reply), 0, (struct sockaddr *) &their_addr, addr_len)) == -1) {
+    //Send reply msg
+    if ((numbytes = sendto(sockfd, reply, strlen(reply), 0,
+            (struct sockaddr *) &their_addr, addr_len)) == -1) {
         perror("sendto");
         exit(1);
     }
@@ -135,63 +131,19 @@ int main(int argc, char *argv[]) {
     // Data read from packets should then be written to this file stream
     // If the EOF packet is received, the file stream should be closed
 
-    //Process first packet to save information
-    char savedPacket[2000];
-    char receivedPacket[2000];
-
-    //Initialize the buffers
-    bzero(savedPacket, 2000);
-    bzero(receivedPacket, 2000);
-
     //Variables to be used
     int i;
-    int total_frag, frag_no, size;
+    char receivedPacket[2000];
     char filename[1000];
+    FILE * fp = NULL;
+    struct packet pac;
 
-    //Receiving initialPacket
-    if ((numbytes = recvfrom(sockfd, receivedPacket, sizeof (receivedPacket), 0,
-            (struct sockaddr *) &their_addr, &addr_len)) == -1) {
-        perror("recvfrom");
-        exit(1);
-    }
+    //Testing purpose
+    int pacCount = 0; //With initial packet saved
+    while (1) {
 
-    //Save just incase token doesn't take care of null character
-    memcpy(savedPacket, receivedPacket, 2000);
-
-
-    int j = 0;
-    int colonLocation[4];
-    for (i = 0; i < 2000; i++) {
-        if (receivedPacket[i] == ':')
-            colonLocation[j++] = i;
-        if (j == 4)
-            break;
-    }
-
-    total_frag = atoi(receivedPacket);
-    frag_no = atoi(&receivedPacket[colonLocation[0] + 1]);
-    size = atoi(&receivedPacket[colonLocation[1] + 1]);
-
-    memcpy(filename, &receivedPacket[colonLocation[2] + 1], colonLocation[3] - colonLocation[2]);
-    filename[colonLocation[3] - colonLocation[2] - 1] = '\x00';
-
-    printf("%d %d %d %sENDEND\n", total_frag, frag_no, size, filename);
-
-    struct packet *pac = malloc(sizeof (struct packet) * total_frag);
-
-    //Save the initial packet in the array
-    memcpy(pac[frag_no].filedata, &receivedPacket[colonLocation[3] + 1], size);
-    pac[frag_no].filename = filename;
-    pac[frag_no].frag_no = frag_no;
-    pac[frag_no].size = size;
-    pac[frag_no].total_frag = total_frag;
-
-    int pacCount = 1; //With initial packet saved
-    while (pacCount++ < total_frag) {
+        //Empty buffer
         bzero(receivedPacket, 2000);
-
-        //Variables to be used
-        int total_frag, frag_no, size;
 
         //Receiving initialPacket
         if ((numbytes = recvfrom(sockfd, receivedPacket, sizeof (receivedPacket), 0,
@@ -200,10 +152,7 @@ int main(int argc, char *argv[]) {
             exit(1);
         }
 
-        //Save just incase token doesn't take care of null character
-        memcpy(savedPacket, receivedPacket, 2000);
-
-
+        //Parse the msg
         int j = 0;
         int colonLocation[4];
         for (i = 0; i < 2000; i++) {
@@ -213,54 +162,52 @@ int main(int argc, char *argv[]) {
                 break;
         }
 
+        //Parse integers
+        pac.total_frag = atoi(receivedPacket);
+        pac.frag_no = atoi(&receivedPacket[colonLocation[0] + 1]);
+        pac.size = atoi(&receivedPacket[colonLocation[1] + 1]);
 
-        total_frag = atoi(receivedPacket);
-        frag_no = atoi(&receivedPacket[colonLocation[0] + 1]);
-        size = atoi(&receivedPacket[colonLocation[1] + 1]);
+        //Parse filename
+        bzero(filename, 1000);
+        memcpy(filename, &receivedPacket[colonLocation[2] + 1], colonLocation[3] - colonLocation[2]);
+        filename[colonLocation[3] - colonLocation[2] - 1] = '\x00'; //Add NULL at the end
+        pac.filename = filename;
 
         //Save the initial packet in the array
-        memcpy(pac[frag_no].filedata, &receivedPacket[colonLocation[3] + 1], size);
-        pac[frag_no].filename = filename;
-        pac[frag_no].frag_no = frag_no;
-        pac[frag_no].size = size;
-        pac[frag_no].total_frag = total_frag;
+        memcpy(pac.filedata, &receivedPacket[colonLocation[3] + 1], pac.size);
+
+        //If it's first packet, open file stream
+        if (pac.frag_no == 0) {
+            assert(fp == NULL);
+            fp = fopen(filename, "w+");
+            assert(fp != NULL);
+        }
+
+        //Testing
+        printf("%d\n", pacCount);
+        pacCount++;
+
+        //Write the data onto file stream
+        fwrite(pac.filedata, sizeof (char), pac.size, fp);
+
+        //Send AWK
+        if ((numbytes = sendto(sockfd, "ACK", strlen("ACK"), 0,
+                (struct sockaddr *) &their_addr, addr_len)) == -1) {
+            perror("sendto");
+            exit(1);
+        }
+
+        //If it was the last packet close the file stream
+        if (pac.frag_no == pac.total_frag - 1) {
+            int f = fclose(fp);
+            assert(f == 0);
+            pacCount = 0;
+            fp = NULL;
+            assert(fp == NULL);
+            continue;
+        }
 
     }
-
-    //Writing to a file
-    FILE *fp = fopen(filename, "wb");
-    for (i = 0; i < total_frag; i++) {
-        int offset = 0;
-        fwrite(pac[i].filedata, sizeof (char), pac[i].size, fp);
-    }
-
-
-
-    //Testing, output goes to testResult
-    FILE *test = fopen("testResult.txt", "wb");
-    for (i = 0; i < total_frag; i++) {
-        char testingBuf[2000];
-
-        //Preparing header
-        sprintf(testingBuf, "%d:%d:%d:", pac[i].total_frag, pac[i].frag_no, pac[i].size);
-
-        int digitStringSize = strlen(testingBuf);
-        int fileNameSize = strlen(pac[i].filename);
-
-        //Copy the filename
-        memcpy(&testingBuf[digitStringSize], pac[i].filename, fileNameSize);
-        memcpy(&testingBuf[digitStringSize + fileNameSize], ":", sizeof (char));
-        //Copy the file data
-        memcpy(&testingBuf[digitStringSize + fileNameSize + 1], pac[i].filedata, pac[i].size);
-
-        //Write the data in a file 
-        fwrite(testingBuf, sizeof (char), digitStringSize + fileNameSize + pac[i].size + 1, test);
-        fwrite("\n\n\n", sizeof (char), 3, test);
-    }
-
-
-    fclose(test);
-    fclose(fp);
     close(sockfd);
     return 0;
 }
