@@ -76,12 +76,12 @@ int open_socket(struct addrinfo **p, char *argv[]) {
     return sockfd;
 }
 
-void verify_ftp_connection(int sockfd, char* protocolType, struct addrinfo *p) {
+void verify_ftp_connection(int sockfd, char* protocolType, struct addrinfo **p) {
     int numbytes;
     
     // Sending a message protocolType "ftp" to the server
     if ((numbytes = sendto(sockfd, protocolType, strlen(protocolType), 0,
-            p->ai_addr, p->ai_addrlen)) == -1) {
+            (*p)->ai_addr, (*p)->ai_addrlen)) == -1) {
         perror("client: sendto");
         exit(1);
     }
@@ -89,7 +89,7 @@ void verify_ftp_connection(int sockfd, char* protocolType, struct addrinfo *p) {
     // Receive a message from the server:
     char msg[MAXBUFSIZE];
     if ((numbytes = recvfrom(sockfd, msg, MAXDATASIZE - 1, 0,
-            p->ai_addr, &p->ai_addrlen)) == -1) {
+            (*p)->ai_addr, &(*p)->ai_addrlen)) == -1) {
         perror("recv");
         exit(1);
     }
@@ -209,7 +209,7 @@ int main(int argc, char *argv[]) {
     char serverAddress[MAXBUFSIZE];
     int port;
     command_line_arguments(serverAddress, &port, argc, argv);
-    
+
     // Ask the user to input a message follows the format: ftp <file name>
     char protocolType[MAXBUFSIZE];
     char fileName[MAXBUFSIZE];
@@ -230,7 +230,7 @@ int main(int argc, char *argv[]) {
     // Based on the above client and server, verify round trip time
     clock_t startTime, endTime, diff;
     startTime = clock();
-    verify_ftp_connection(sockfd, protocolType, p);
+    verify_ftp_connection(sockfd, protocolType, &p);
     endTime = clock();
     diff = endTime - startTime;
     int usec = diff * 1000 * 1000 / CLOCKS_PER_SEC;
