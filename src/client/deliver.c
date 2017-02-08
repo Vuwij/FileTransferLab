@@ -43,22 +43,22 @@ void user_input(char* protocolType, char* fileName) {
     }
 }
 
-int open_socket(struct addrinfo **p, char *argv[]) {
+int open_socket(struct addrinfo **p, struct addrinfo **servinfo, char *argv[]) {
     int sockfd;
-    struct addrinfo hints, *servinfo;
+    struct addrinfo hints;
     int rv;
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
 
-    if ((rv = getaddrinfo(argv[1], argv[2], &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(argv[1], argv[2], &hints, &(*servinfo))) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }
 
     // loop through all the results and make a socket
-    for ((*p) = servinfo; (*p) != NULL; (*p) = (*p)->ai_next) {
+    for ((*p) = *servinfo; (*p) != NULL; (*p) = (*p)->ai_next) {
         if ((sockfd = socket((*p)->ai_family, (*p)->ai_socktype,
                 (*p)->ai_protocol)) == -1) {
             perror("client: socket");
@@ -72,7 +72,6 @@ int open_socket(struct addrinfo **p, char *argv[]) {
         return 2;
     }
     
-    freeaddrinfo(servinfo);
     return sockfd;
 }
 
@@ -224,8 +223,8 @@ int main(int argc, char *argv[]) {
     
     // Make a network connection and find the correct socket
     int sockfd;
-    struct addrinfo *p;
-    sockfd = open_socket(&p, argv);
+    struct addrinfo *p, *servinfo;
+    sockfd = open_socket(&p, &servinfo, argv);
     
     // Based on the above client and server, verify round trip time
     clock_t startTime, endTime, diff;
@@ -241,5 +240,6 @@ int main(int argc, char *argv[]) {
     
     fclose(fp);
     close(sockfd);
+    freeaddrinfo(servinfo);
     return 0;
 }
