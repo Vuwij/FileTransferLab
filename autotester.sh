@@ -1,4 +1,4 @@
-PORT=5005
+PORT=5001
 
 # BUILD FILES
 make
@@ -10,14 +10,11 @@ pkill server
 
 # Starts the server
 echo "Starting Server"
-cd build/Server
-rm -f Twice.jpg
-./server $PORT &
-cd ../..
+build/Server/server $PORT &
 sleep .5
 
 # Starts the client
 echo "Starting Client"
-build/Client/deliver 127.0.0.1 $PORT << 'EOF'
+build/Client/deliver ug56@eecg.utoronto.ca $PORT << 'EOF'
 ftp Twice.jpg
 EOF
