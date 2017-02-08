@@ -134,10 +134,12 @@ void send_file(char* fileName, FILE *fp, int sockfd, struct addrinfo *p) {
     int numbytes;
     char msg[MAXBUFSIZE];
     char tcp_packet[2000];
+    char last_tcp_packet[2000];
     
     for (i = 0; i < total_frag; i++) {
 
-        // Initialize the buffer just incase :)
+        // Initialize the buffer just in case :)
+        strcpy(last_tcp_packet, tcp_packet);
         bzero(tcp_packet, 2000);
 
         // Add the header to the packet
@@ -152,24 +154,47 @@ void send_file(char* fileName, FILE *fp, int sockfd, struct addrinfo *p) {
         // Add the data to the packet
         memcpy(&tcp_packet[digitStringSize + fileNameSize + 1], packet_list[i].filedata, packet_list[i].size);
 
-        //If it's not initial packet then wait for AWK
+        //If it's not initial packet then wait for ACK
         if (i != 0) {
-            if ((numbytes = recvfrom(sockfd, msg, MAXDATASIZE - 1, 0,
-                    p->ai_addr, &p->ai_addrlen)) == -1) {
-                perror("recv");
-                exit(1);
-            }
-            if (strcmp(msg, "ACK") == 0)
-                ;
-            else if (strcmp(msg, "NACK") == 0)
-                exit(99);
-        }
+            while(1) {
+                struct timeval tv;
+                fd_set read_fds;
+                tv.tv_sec = 0;
+                tv.tv_usec = PACKET_TIMEOUT;
+                FD_ZERO(&read_fds);
+                FD_SET(sockfd, &read_fds);
 
+                select(sockfd+1, &read_fds, NULL, NULL, &tv);
+
+                if (FD_ISSET(sockfd, &read_fds)) {
+                    if ((numbytes = recvfrom(sockfd, msg, MAXDATASIZE - 1, 0,
+                            p->ai_addr, &p->ai_addrlen)) == -1) {
+                        perror("recv");
+                        exit(1);
+                    }
+                    
+                    if(DEBUG) printf("Acknowledged %s\n", msg);
+                    if (strcmp(msg, "ACK") == 0) break;
+                    if (strcmp(msg, "NACK") == 0) break;
+                    
+                } else {
+                    if(DEBUG) printf("Resending %d\n", i-1);
+                    if ((numbytes = sendto(sockfd, last_tcp_packet, 2000, 0,
+                        p->ai_addr, p->ai_addrlen)) == -1) {
+                        perror("client: sendto");
+                        exit(1);
+                    }
+                }                
+            }
+        }
+        
+        // Send the next packet
         if ((numbytes = sendto(sockfd, tcp_packet, 2000, 0,
                 p->ai_addr, p->ai_addrlen)) == -1) {
             perror("client: sendto");
             exit(1);
         }
+        if(DEBUG) printf("Sending %d\n", i);
     }
     
     // For printing packet information

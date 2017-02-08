@@ -9,6 +9,10 @@
 // Server Parameters
 #define BACKLOG 10          // how many pending connections queue will hold
 
+#define PACKET_TIMEOUT 100  // Timeout for packet sending (in microseconds)
+
+#define DEBUG 1
+
 
 #endif
 

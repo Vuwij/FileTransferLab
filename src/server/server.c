@@ -113,7 +113,7 @@ void receive_file(int sockfd, struct addrinfo *p) {
     //Testing purpose
     int pacCount = 0; //With initial packet saved
     while (1) {
-
+        
         //Empty buffer
         bzero(receivedPacket, 2000);
 
@@ -147,29 +147,39 @@ void receive_file(int sockfd, struct addrinfo *p) {
 
         //Save the initial packet in the array
         memcpy(pac.filedata, &receivedPacket[colonLocation[3] + 1], pac.size);
-
+        
+        // Send acknowledgement to deliverer
+        if(pac.frag_no != pacCount) {
+            if(DEBUG) printf("Received Incorrect Packet %d\n", pac.frag_no);
+            
+            if ((numbytes = sendto(sockfd, "NACK", strlen("NACK"), 0,
+                (struct sockaddr *) &their_addr, addr_len)) == -1) {
+                perror("sendto");
+                exit(1);
+            }
+            
+            continue;
+        } else {
+            if(DEBUG) printf("Received %d\n", pacCount);
+            
+            if ((numbytes = sendto(sockfd, "ACK", strlen("ACK"), 0,
+                (struct sockaddr *) &their_addr, addr_len)) == -1) {
+                perror("sendto");
+                exit(1);
+            }
+            printf("Send Acknowledgement for %d\n", pacCount);
+            pacCount++;
+        }
         //If it's first packet, open file stream
         if (pac.frag_no == 0) {
             assert(fp == NULL);
             fp = fopen(filename, "w+");
             assert(fp != NULL);
         }
-
-        //Testing
-        if(PRINT_PACKETS)
-            printf("%d\n", pacCount);
-        pacCount++;
-
+        
         //Write the data onto file stream
         fwrite(pac.filedata, sizeof (char), pac.size, fp);
-
-        //Send AWK
-        if ((numbytes = sendto(sockfd, "ACK", strlen("ACK"), 0,
-                (struct sockaddr *) &their_addr, addr_len)) == -1) {
-            perror("sendto");
-            exit(1);
-        }
-
+        
         //If it was the last packet close the file stream
         if (pac.frag_no == pac.total_frag - 1) {
             int f = fclose(fp);

@@ -21,3 +21,6 @@ echo "Starting Client"
 build/Client/deliver 127.0.0.1 $PORT << 'EOF'
 ftp Twice.jpg
 EOF
+
+# Verify that it works
+diff Twice.jpg build/Server/Twice.jpg
