@@ -3,5 +3,4 @@
 #
 # NOCDDL
 #
-# Server configuration
-# Client configuration
+# AutoTester configuration

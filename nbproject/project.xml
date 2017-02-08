@@ -15,11 +15,7 @@
             </sourceRootList>
             <confList>
                 <confElem>
-                    <name>Server</name>
-                    <type>1</type>
-                </confElem>
-                <confElem>
-                    <name>Client</name>
+                    <name>AutoTester</name>
                     <type>1</type>
                 </confElem>
             </confList>

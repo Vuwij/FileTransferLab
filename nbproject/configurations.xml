@@ -14,11 +14,13 @@
                    displayName="Source Files"
                    projectFiles="true">
       <logicalFolder name="client" displayName="client" projectFiles="true">
-        <itemPath>client/deliver.c</itemPath>
+        <itemPath>src/client/deliver.c</itemPath>
       </logicalFolder>
       <logicalFolder name="server" displayName="server" projectFiles="true">
-        <itemPath>server/server.c</itemPath>
+        <itemPath>src/server/server.c</itemPath>
       </logicalFolder>
+      <itemPath>src/constants.h</itemPath>
+      <itemPath>src/packet.h</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -30,6 +32,7 @@
                    projectFiles="false"
                    kind="IMPORTANT_FILES_FOLDER">
       <itemPath>Makefile</itemPath>
+      <itemPath>autotester.sh</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
@@ -38,7 +41,7 @@
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
-    <conf name="Server" type="1">
+    <conf name="AutoTester" type="1">
       <toolsSet>
         <compilerSet>default</compilerSet>
         <dependencyChecking>true</dependencyChecking>
@@ -46,26 +49,13 @@
       </toolsSet>
       <compileType>
       </compileType>
-      <item path="client/deliver.c" ex="false" tool="0" flavor2="0">
+      <item path="src/client/deliver.c" ex="false" tool="0" flavor2="0">
       </item>
-      <item path="constants.h" ex="false" tool="3" flavor2="0">
+      <item path="src/constants.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="server/server.c" ex="false" tool="0" flavor2="0">
+      <item path="src/packet.h" ex="false" tool="3" flavor2="0">
       </item>
-    </conf>
-    <conf name="Client" type="1">
-      <toolsSet>
-        <compilerSet>default</compilerSet>
-        <dependencyChecking>true</dependencyChecking>
-        <rebuildPropChanged>false</rebuildPropChanged>
-      </toolsSet>
-      <compileType>
-      </compileType>
-      <item path="client/deliver.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="constants.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="server/server.c" ex="false" tool="0" flavor2="0">
+      <item path="src/server/server.c" ex="false" tool="0" flavor2="0">
       </item>
     </conf>
   </confs>

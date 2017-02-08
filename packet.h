@@ -1,5 +1,5 @@
-#ifndef CONSTANTS_H
-#define CONSTANTS_H
+#ifndef PACKET_H
+#define	PACKET_H
 
 // Packet Format: all packets sent between the client and server must have the following structure
 struct packet {             // All members of the packet should be sent as a single string, each filed separated by a colon
@@ -10,7 +10,5 @@ struct packet {             // All members of the packet should be sent as a sin
     char filedata[1000];
 };
 
-
-
-#endif
+#endif	/* PACKET_H */
 

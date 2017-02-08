@@ -27,11 +27,11 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 PROJECTNAME=FileTransferLab
 
 # Active Configuration
-DEFAULTCONF=Server
+DEFAULTCONF=AutoTester
 CONF=${DEFAULTCONF}
 
 # All Configurations
-ALLCONFS=Server Client 
+ALLCONFS=AutoTester 
 
 
 # build
