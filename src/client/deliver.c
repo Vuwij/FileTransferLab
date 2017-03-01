@@ -139,7 +139,7 @@ void send_file(char* fileName, FILE *fp, int sockfd, struct addrinfo *p) {
     char last_tcp_packet[2000];
     
     for (i = 0; i < total_frag; i++) {
-
+        int j;
         // Initialize the buffer just in case :)
         strcpy(last_tcp_packet, tcp_packet);
         bzero(tcp_packet, 2000);

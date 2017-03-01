@@ -110,9 +110,9 @@ void receive_file(int sockfd, struct addrinfo *p) {
     addr_len = sizeof their_addr;
     FILE * fp = NULL;
     struct packet pac;
-
     //Testing purpose
     int pacCount = 0; //With initial packet saved
+    
     while (1) {
         
         //Empty buffer
@@ -148,22 +148,37 @@ void receive_file(int sockfd, struct addrinfo *p) {
 
         //Save the initial packet in the array
         memcpy(pac.filedata, &receivedPacket[colonLocation[3] + 1], pac.size);
-        
+
         // Send acknowledgement to deliverer
         if(pac.frag_no != pacCount) {
             if(DEBUG) printf("                    Incorrect Packet %d\n", pac.frag_no);
-            
+
+            // This nack is for incorrect packet
             if(SEND_NACK) {
-                if ((numbytes = sendto(sockfd, "NACK", strlen("NACK")+1, 0,
-                    (struct sockaddr *) &their_addr, addr_len)) == -1) {
-                    perror("sendto");
-                    exit(1);
+                struct timeval tv;
+                fd_set read_fds;
+                tv.tv_sec = 0;
+                tv.tv_usec = PACKET_TIMEOUT_S;
+                FD_ZERO(&read_fds);
+                FD_SET(sockfd, &read_fds);
+
+                select(sockfd+1, &read_fds, NULL, NULL, &tv);
+                
+                if (FD_ISSET(sockfd, &read_fds)) {
+                    continue;
+                } else {
+                    printf("                    Sending NACK (Timeout) \n");
+                    if ((numbytes = sendto(sockfd, "NACK", strlen("NACK")+1, 0,
+                        (struct sockaddr *) &their_addr, addr_len)) == -1) {
+                        perror("sendto");
+                        exit(1);
+                    }
                 }
             }
             continue;
         } else {
             if(DEBUG) printf("                    Received %d\n", pacCount);
-            
+
             if ((numbytes = sendto(sockfd, "ACK", 4, 0,
                 (struct sockaddr *) &their_addr, addr_len)) == -1) {
                 perror("sendto");
@@ -178,10 +193,10 @@ void receive_file(int sockfd, struct addrinfo *p) {
             fp = fopen(filename, "w+");
             assert(fp != NULL);
         }
-        
+
         //Write the data onto file stream
         fwrite(pac.filedata, sizeof (char), pac.size, fp);
-        
+
         //If it was the last packet close the file stream
         if (pac.frag_no == pac.total_frag - 1) {
             int f = fclose(fp);
@@ -189,7 +204,7 @@ void receive_file(int sockfd, struct addrinfo *p) {
             pacCount = 0;
             fp = NULL;
             assert(fp == NULL);
-            continue;
+            return;
         }
     }
 }
