@@ -113,8 +113,12 @@ void receive_file(int sockfd, struct addrinfo *p) {
     //Testing purpose
     int pacCount = 0; //With initial packet saved
     
+#ifdef TEST_BAD_SERVER
+    int counter = 0;
+#endif
+    
     while (1) {
-        
+        int h = 0;
         //Empty buffer
         bzero(receivedPacket, 2000);
 
@@ -124,7 +128,7 @@ void receive_file(int sockfd, struct addrinfo *p) {
             perror("recvfrom");
             exit(1);
         }
-
+        
         //Parse the msg
         int j = 0;
         int colonLocation[4];
@@ -139,7 +143,14 @@ void receive_file(int sockfd, struct addrinfo *p) {
         pac.total_frag = atoi(receivedPacket);
         pac.frag_no = atoi(&receivedPacket[colonLocation[0] + 1]);
         pac.size = atoi(&receivedPacket[colonLocation[1] + 1]);
-
+        
+#ifdef TEST_BAD_SERVER
+        if(pac.frag_no == 10 && counter == 0) {
+            counter++;
+            continue;
+        }
+#endif
+        
         //Parse filename
         bzero(filename, 1000);
         memcpy(filename, &receivedPacket[colonLocation[2] + 1], colonLocation[3] - colonLocation[2]);

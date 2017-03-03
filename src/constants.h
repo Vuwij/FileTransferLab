@@ -16,5 +16,7 @@
 #define DEBUG               1       // For printing values
 
 
+#define TEST_BAD_SERVER     1
+
 #endif
 

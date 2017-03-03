@@ -141,7 +141,7 @@ void send_file(char* fileName, FILE *fp, int sockfd, struct addrinfo *p) {
     for (i = 0; i < total_frag; i++) {
         int j;
         // Initialize the buffer just in case :)
-        strcpy(last_tcp_packet, tcp_packet);
+        memcpy(last_tcp_packet, tcp_packet, 2000);
         bzero(tcp_packet, 2000);
 
         // Add the header to the packet
